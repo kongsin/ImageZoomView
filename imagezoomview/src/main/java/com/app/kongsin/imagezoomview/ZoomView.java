@@ -191,11 +191,11 @@ public class ZoomView extends AppCompatImageView implements GestureDetector.OnGe
     }
 
     private void move(float x, float y) {
+        mCurrentZoomPoint.set(mCurrentZoomPoint.x - x, mCurrentZoomPoint.y - y);
         Matrix matrix = new Matrix(mCurrentMatrix);
         matrix.postTranslate(x, y);
         mCurrentMatrix.set(matrix);
         postInvalidate();
-        mCurrentZoomPoint.set(mCurrentZoomPoint.x - x, mCurrentZoomPoint.y - y);
     }
 
     @Override
