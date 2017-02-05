@@ -3,4 +3,4 @@ Zoom able ImageView
 
 **Preview**
 
-![Alt Text](https://drive.google.com/file/d/0BzqrFmvXneLncURMVkk5UlR3eW8/view?usp=sharing)
+![Animated image](https://drive.google.com/file/d/0BzqrFmvXneLncURMVkk5UlR3eW8/view?usp=sharing)
