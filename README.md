@@ -2,4 +2,4 @@
 Zoom able ImageView
 
 **Preview**
-![Sample Image](https://drive.google.com/open?id=0BzqrFmvXneLncURMVkk5UlR3eW8)
+![Sample Image](https://drive.google.com/file/d/0BzqrFmvXneLncURMVkk5UlR3eW8/view?usp=sharing)
