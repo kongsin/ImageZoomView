@@ -20,7 +20,6 @@ import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.ScaleAnimation;
-import android.view.animation.TranslateAnimation;
 
 /**
  * Created by kongsin on 12/11/2016.
@@ -33,11 +32,9 @@ public class ZoomView extends AppCompatImageView implements GestureDetector.OnGe
     private static final String TAG = "ZoomView";
     private ScaleGestureDetector scaleGestureDetector;
     private PointF mRect = new PointF();
+    private PointF mCurrentZoomPoint = new PointF();
     private MatrixValueManager matrixValueManager, mImageMatrixManager;
-    private TranslateAnimation mAnimation;
     private ScaleAnimation mMyScaleAnimation;
-    private float lastX;
-    private float lastY;
     private Handler mHandler = new Handler();
     private float mLastPositionY;
     private float mLastPositionX;
@@ -99,6 +96,13 @@ public class ZoomView extends AppCompatImageView implements GestureDetector.OnGe
         if (matrixValueManager.getScaleX() <= 1) {
             mCurrentMatrix.reset();
             postInvalidate();
+        } else {
+            mHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    adjustPosition();
+                }
+            });
         }
         return true;
     }
@@ -191,6 +195,7 @@ public class ZoomView extends AppCompatImageView implements GestureDetector.OnGe
         matrix.postTranslate(x, y);
         mCurrentMatrix.set(matrix);
         postInvalidate();
+        mCurrentZoomPoint.set(mCurrentZoomPoint.x - x, mCurrentZoomPoint.y - y);
     }
 
     @Override
@@ -205,7 +210,7 @@ public class ZoomView extends AppCompatImageView implements GestureDetector.OnGe
 
     @Override
     public boolean onDown(MotionEvent motionEvent) {
-        mRect.set(motionEvent.getX(), motionEvent.getY());
+        mRect.set(motionEvent.getX(motionEvent.getPointerCount() -1), motionEvent.getY(motionEvent.getPointerCount() -1));
         return true;
     }
 
@@ -301,13 +306,13 @@ public class ZoomView extends AppCompatImageView implements GestureDetector.OnGe
     public void releaseZoom(){
         if (matrixValueManager.getScaleX() > 1 || matrixValueManager.getScaleY()> 1) {
             final float scale = matrixValueManager.getScaleX();
-            ValueAnimator valueAnimator = ValueAnimator.ofFloat(Math.abs(1 - scale));
+            ValueAnimator valueAnimator = ValueAnimator.ofFloat(Math.abs(1-scale));
             valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                 @Override
                 public void onAnimationUpdate(ValueAnimator animation) {
                     float value = (float) animation.getAnimatedValue();
                     Matrix matrix = new Matrix(mCurrentMatrix);
-                    matrix.setScale(scale - value, scale - value, mRect.x, getHeight() / 2);
+                    matrix.setScale(scale - value, scale - value, mCurrentZoomPoint.x, getHeight() / 2);
                     mCurrentMatrix.set(matrix);
                     postInvalidate();
                 }
@@ -319,17 +324,12 @@ public class ZoomView extends AppCompatImageView implements GestureDetector.OnGe
 
     @Override
     public boolean onDoubleTap(final MotionEvent motionEvent) {
-        if (matrixValueManager.getScaleX() > 1 || matrixValueManager.getScaleX() > 1) {
-            releaseZoom();
-        } else {
-            zoomAnimation(motionEvent, 2.0F);
-        }
+
         return true;
     }
 
-    private void zoomAnimation(final MotionEvent motionEvent, final float scale) {
-
-        mMyScaleAnimation = new ScaleAnimation(1.0F, scale, 1.0F, scale, motionEvent.getX(), getHeight() / 2);
+    private void zoomAnimation(final float scale) {
+        mMyScaleAnimation = new ScaleAnimation(1.0F, scale, 1.0F, scale, mCurrentZoomPoint.x, getHeight() / 2);
         mMyScaleAnimation.setDuration(250);
         mMyScaleAnimation.setAnimationListener(new Animation.AnimationListener() {
             @Override
@@ -340,17 +340,15 @@ public class ZoomView extends AppCompatImageView implements GestureDetector.OnGe
             @Override
             public void onAnimationEnd(Animation animation) {
 
-                Matrix matrix = new Matrix(mCurrentMatrix);
-                matrix.postScale(scale, scale, motionEvent.getX(), getHeight() / 2);
-                mCurrentMatrix.set(matrix);
+                mCurrentMatrix.postScale(scale, scale, mCurrentZoomPoint.x, getHeight() / 2);
                 postInvalidate();
 
-                new Handler().post(new Runnable() {
+                mHandler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
                         adjustPosition();
                     }
-                });
+                }, 250);
 
             }
 
@@ -365,6 +363,12 @@ public class ZoomView extends AppCompatImageView implements GestureDetector.OnGe
 
     @Override
     public boolean onDoubleTapEvent(MotionEvent motionEvent) {
+        if (matrixValueManager.getScaleX() > 1 || matrixValueManager.getScaleX() > 1) {
+            releaseZoom();
+        } else {
+            mCurrentZoomPoint.set(motionEvent.getX(), motionEvent.getY());
+            zoomAnimation(2.0F);
+        }
         return true;
     }
 
@@ -375,25 +379,18 @@ public class ZoomView extends AppCompatImageView implements GestureDetector.OnGe
         float focusY = scaleGestureDetector.getFocusY();
         mCurrentMatrix.postScale(scale, scale, focusX, focusY);
         postInvalidate();
+        mCurrentZoomPoint.set(focusX, focusY);
         return true;
     }
 
     @Override
     public boolean onScaleBegin(ScaleGestureDetector scaleGestureDetector) {
-        Log.i(TAG, "onScaleBegin: ");
         mRect.set(scaleGestureDetector.getFocusX(), scaleGestureDetector.getFocusY());
         return true;
     }
 
     @Override
     public void onScaleEnd(ScaleGestureDetector scaleGestureDetector) {
-        Log.i(TAG, "onScaleEnd: ");
         mRect.set(scaleGestureDetector.getFocusX(), scaleGestureDetector.getFocusY());
-        postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                adjustPosition();
-            }
-        }, 250);
     }
 }
