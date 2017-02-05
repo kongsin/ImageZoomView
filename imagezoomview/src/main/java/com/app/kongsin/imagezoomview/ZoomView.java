@@ -186,30 +186,6 @@ public class ZoomView extends AppCompatImageView implements GestureDetector.OnGe
 
     }
 
-//    private void moveAnimation(final float x, final float y) {
-//
-//        mAnimation = new TranslateAnimation(0, x, 0, y);
-//        mAnimation.setDuration(250);
-//        mAnimation.setAnimationListener(new Animation.AnimationListener() {
-//            @Override
-//            public void onAnimationStart(Animation animation) {
-//
-//            }
-//
-//            @Override
-//            public void onAnimationEnd(Animation animation) {
-//                move(x, y);
-//            }
-//
-//            @Override
-//            public void onAnimationRepeat(Animation animation) {
-//
-//            }
-//        });
-//
-//        startAnimation(mAnimation);
-//    }
-
     private void move(float x, float y) {
         Matrix matrix = new Matrix(mCurrentMatrix);
         matrix.postTranslate(x, y);
