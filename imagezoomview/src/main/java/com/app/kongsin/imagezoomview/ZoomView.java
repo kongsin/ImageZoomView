@@ -38,6 +38,7 @@ public class ZoomView extends AppCompatImageView implements GestureDetector.OnGe
     private Handler mHandler = new Handler();
     private float mLastPositionY;
     private float mLastPositionX;
+    private boolean isZooming = false;
 
     public ZoomView(Context context) {
         super(context);
@@ -226,7 +227,7 @@ public class ZoomView extends AppCompatImageView implements GestureDetector.OnGe
 
     @Override
     public boolean onScroll(final MotionEvent motionEvent, final MotionEvent motionEvent1, float v, float v1) {
-        if (motionEvent1.getPointerCount() == 1) {
+        if (motionEvent1.getPointerCount() == 1 && !isZooming) {
             if (!mRect.equals(motionEvent1.getX(), motionEvent1.getY())) {
                 calculatePosition(motionEvent1.getX(), motionEvent1.getY());
             }
@@ -305,6 +306,7 @@ public class ZoomView extends AppCompatImageView implements GestureDetector.OnGe
 
     public void releaseZoom(){
         if (matrixValueManager.getScaleX() > 1 || matrixValueManager.getScaleY()> 1) {
+            isZooming = true;
             final float scale = matrixValueManager.getScaleX();
             ValueAnimator valueAnimator = ValueAnimator.ofFloat(Math.abs(1-scale));
             valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
@@ -315,6 +317,9 @@ public class ZoomView extends AppCompatImageView implements GestureDetector.OnGe
                     matrix.setScale(scale - value, scale - value, mCurrentZoomPoint.x, getHeight() / 2);
                     mCurrentMatrix.set(matrix);
                     postInvalidate();
+                    if (value == Math.abs(1-scale)) {
+                        isZooming = false;
+                    }
                 }
             });
             valueAnimator.setDuration(250);
@@ -324,8 +329,7 @@ public class ZoomView extends AppCompatImageView implements GestureDetector.OnGe
 
     @Override
     public boolean onDoubleTap(final MotionEvent motionEvent) {
-
-        return true;
+        return false;
     }
 
     private void zoomAnimation(final float scale) {
@@ -334,7 +338,7 @@ public class ZoomView extends AppCompatImageView implements GestureDetector.OnGe
         mMyScaleAnimation.setAnimationListener(new Animation.AnimationListener() {
             @Override
             public void onAnimationStart(Animation animation) {
-
+                isZooming = true;
             }
 
             @Override
@@ -349,7 +353,7 @@ public class ZoomView extends AppCompatImageView implements GestureDetector.OnGe
                         adjustPosition();
                     }
                 }, 250);
-
+                isZooming = false;
             }
 
             @Override
@@ -363,24 +367,30 @@ public class ZoomView extends AppCompatImageView implements GestureDetector.OnGe
 
     @Override
     public boolean onDoubleTapEvent(MotionEvent motionEvent) {
-        if (matrixValueManager.getScaleX() > 1 || matrixValueManager.getScaleX() > 1) {
-            releaseZoom();
-        } else {
-            mCurrentZoomPoint.set(motionEvent.getX(), motionEvent.getY());
-            zoomAnimation(2.0F);
+        if (motionEvent.getAction() == MotionEvent.ACTION_UP) {
+            if (matrixValueManager.getScaleX() > 1 || matrixValueManager.getScaleX() > 1) {
+                releaseZoom();
+            } else {
+                mCurrentZoomPoint.set(motionEvent.getX(), motionEvent.getY());
+                zoomAnimation(2.0F);
+            }
+            return true;
         }
-        return true;
+        return false;
     }
 
     @Override
     public boolean onScale(ScaleGestureDetector scaleGestureDetector) {
         float scale = scaleGestureDetector.getCurrentSpan() / scaleGestureDetector.getPreviousSpan();
-        float focusX = scaleGestureDetector.getFocusX();
-        float focusY = scaleGestureDetector.getFocusY();
-        mCurrentMatrix.postScale(scale, scale, focusX, focusY);
-        postInvalidate();
-        mCurrentZoomPoint.set(focusX, focusY);
-        return true;
+        if (matrixValueManager.getScaleX() >= 1) {
+            float focusX = scaleGestureDetector.getFocusX();
+            float focusY = scaleGestureDetector.getFocusY();
+            mCurrentMatrix.postScale(scale, scale, focusX, focusY);
+            postInvalidate();
+            mCurrentZoomPoint.set(focusX, focusY);
+            return true;
+        }
+        return false;
     }
 
     @Override
