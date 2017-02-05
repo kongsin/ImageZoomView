@@ -2,4 +2,4 @@
 Zoom able ImageView
 
 **Preview**
-![Sample Image](https://drive.google.com/file/d/0BzqrFmvXneLncURMVkk5UlR3eW8/view?usp=sharing)
+![Sample Image](https://github.com/kongsin/ImageZoomView/blob/master/videotogif_2017.02.06_01.15.49.gif)
