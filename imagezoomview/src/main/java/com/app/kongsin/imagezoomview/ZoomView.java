@@ -34,7 +34,6 @@ public class ZoomView extends AppCompatImageView implements GestureDetector.OnGe
     private PointF mRect = new PointF();
     private PointF mCurrentZoomPoint = new PointF();
     private MatrixValueManager matrixValueManager, mImageMatrixManager;
-    private ScaleAnimation mMyScaleAnimation;
     private Handler mHandler = new Handler();
     private float mLastPositionY;
     private float mLastPositionX;
@@ -145,6 +144,8 @@ public class ZoomView extends AppCompatImageView implements GestureDetector.OnGe
 
         if (x != 0 || y != 0) {
             moveAnimation(x, y);
+        } else {
+            findCurrentZoomPoint();
         }
     }
 
@@ -362,7 +363,7 @@ public class ZoomView extends AppCompatImageView implements GestureDetector.OnGe
     }
 
     private void zoomAnimation(final float scale) {
-        mMyScaleAnimation = new ScaleAnimation(1.0F, scale, 1.0F, scale, mCurrentZoomPoint.x, mCurrentZoomPoint.y);
+        ScaleAnimation mMyScaleAnimation = new ScaleAnimation(1.0F, scale, 1.0F, scale, mCurrentZoomPoint.x, mCurrentZoomPoint.y);
         mMyScaleAnimation.setDuration(250);
         mMyScaleAnimation.setAnimationListener(new Animation.AnimationListener() {
             @Override

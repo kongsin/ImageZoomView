@@ -6,9 +6,8 @@
     android:layout_height="match_parent"
     tools:context="com.app.kongsin.imagezoom.MainActivity">
 
-    <com.app.kongsin.imagezoomview.ZoomView
-        android:id="@+id/my_zoom_view"
-        android:layout_centerHorizontal="true"
+    <android.support.v4.view.ViewPager
+        android:id="@+id/pager"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 
