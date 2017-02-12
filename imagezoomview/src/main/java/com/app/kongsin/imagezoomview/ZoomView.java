@@ -237,6 +237,16 @@ public class ZoomView extends AppCompatImageView implements GestureDetector.OnGe
         return false;
     }
 
+    @Override
+    public boolean canScrollHorizontally(int direction) {
+        return matrixValueManager.getScaleX() > 1;
+    }
+
+    @Override
+    public boolean canScrollVertically(int direction) {
+        return matrixValueManager.getScaleY() > 1;
+    }
+
     private void calculatePosition(float rawX, float rawY){
         float x = (rawX - mRect.x);
         float y  = (rawY - mRect.y);
