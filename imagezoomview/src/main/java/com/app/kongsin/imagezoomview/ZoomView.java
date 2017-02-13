@@ -72,10 +72,6 @@ public class ZoomView extends AppCompatImageView implements GestureDetector.OnGe
         this.setOnTouchListener(new OnTouchListener() {
             @Override
             public boolean onTouch(View view, final MotionEvent motionEvent) {
-                int action = motionEvent.getAction();
-                if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL){
-                    onActionUp();
-                }
                 scaleGestureDetector.onTouchEvent(motionEvent);
                 mGestureDetector.onTouchEvent(motionEvent);
                 return true;
@@ -181,6 +177,12 @@ public class ZoomView extends AppCompatImageView implements GestureDetector.OnGe
     private void move(float x, float y) {
         mCurrentMatrix.postTranslate(x, y);
         postInvalidate();
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                findCurrentZoomPoint();
+            }
+        });
     }
 
     @Override
@@ -346,7 +348,7 @@ public class ZoomView extends AppCompatImageView implements GestureDetector.OnGe
 
     @Override
     public boolean onDoubleTap(final MotionEvent motionEvent) {
-        return false;
+        return true;
     }
 
     private void zoomAnimation(final float scale) {
@@ -357,7 +359,6 @@ public class ZoomView extends AppCompatImageView implements GestureDetector.OnGe
             public void onAnimationUpdate(ValueAnimator animation) {
                 float value = (float) animation.getAnimatedValue();
                 mCurrentMatrix.setScale(value, value, mCurrentZoomPoint.x, mCurrentZoomPoint.y);
-                matrixValueManager.setMatrix(mCurrentMatrix);
                 postInvalidate();
                 if (value == scale) {
                     mHandler.postDelayed(new Runnable() {
@@ -413,5 +414,6 @@ public class ZoomView extends AppCompatImageView implements GestureDetector.OnGe
     public void onScaleEnd(ScaleGestureDetector scaleGestureDetector) {
         mRect.set(scaleGestureDetector.getFocusX(), scaleGestureDetector.getFocusY());
         isZooming = false;
+        onActionUp();
     }
 }
