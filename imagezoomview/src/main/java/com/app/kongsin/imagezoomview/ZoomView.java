@@ -102,7 +102,6 @@ public class ZoomView extends AppCompatImageView implements GestureDetector.OnGe
             mCurrentMatrix.reset();
             postInvalidate();
         } else {
-            findCurrentZoomPoint();
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -189,9 +188,7 @@ public class ZoomView extends AppCompatImageView implements GestureDetector.OnGe
     }
 
     private void move(float x, float y) {
-        Matrix matrix = new Matrix(mCurrentMatrix);
-        matrix.postTranslate(x, y);
-        mCurrentMatrix.set(matrix);
+        mCurrentMatrix.postTranslate(x, y);
         postInvalidate();
     }
 
@@ -313,16 +310,6 @@ public class ZoomView extends AppCompatImageView implements GestureDetector.OnGe
             _y = getHeight() / 2;
         }
         mCurrentZoomPoint.set(_x, _y);
-        postInvalidate();
-    }
-
-    private Paint getPaint(){
-        Paint paint = new Paint();
-        paint.setColor(Color.GREEN);
-        paint.setStyle(Paint.Style.FILL);
-        paint.setAntiAlias(true);
-        paint.setTextSize(50);
-        return paint;
     }
 
     @Override
@@ -353,9 +340,7 @@ public class ZoomView extends AppCompatImageView implements GestureDetector.OnGe
                 public void onAnimationUpdate(ValueAnimator animation) {
                     float value = (float) animation.getAnimatedValue();
                     if (value != scale) {
-                        Matrix matrix = new Matrix(mCurrentMatrix);
-                        matrix.setScale(value, value, mCurrentZoomPoint.x, mCurrentZoomPoint.y);
-                        mCurrentMatrix.set(matrix);
+                        mCurrentMatrix.setScale(value, value, mCurrentZoomPoint.x, mCurrentZoomPoint.y);
                         postInvalidate();
                         if (value == 1) {
                             isZooming = false;
@@ -380,9 +365,7 @@ public class ZoomView extends AppCompatImageView implements GestureDetector.OnGe
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 float value = (float) animation.getAnimatedValue();
-                Matrix matrix = new Matrix(mCurrentMatrix);
-                matrix.setScale(value, value, mCurrentZoomPoint.x, mCurrentZoomPoint.y);
-                mCurrentMatrix.set(matrix);
+                mCurrentMatrix.setScale(value, value, mCurrentZoomPoint.x, mCurrentZoomPoint.y);
                 matrixValueManager.setMatrix(mCurrentMatrix);
                 postInvalidate();
                 if (value == scale) {
