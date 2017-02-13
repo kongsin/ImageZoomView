@@ -10,7 +10,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 
 import com.app.kongsin.imagezoomview.ZoomView;
-import com.bumptech.glide.Glide;
+import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
         public Object instantiateItem(ViewGroup container, int position) {
             ZoomView zoomView = new ZoomView(mContext);
             zoomView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-            Glide.with(mContext).load(mUrls.get(position)).into(zoomView);
+            Picasso.with(mContext).load(mUrls.get(position)).into(zoomView);
             container.addView(zoomView);
             return zoomView;
         }
