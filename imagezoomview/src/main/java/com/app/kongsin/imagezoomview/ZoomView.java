@@ -5,26 +5,18 @@ import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Matrix;
-import android.graphics.Paint;
 import android.graphics.PointF;
-import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.AppCompatImageView;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
-import android.view.animation.Animation;
 import android.view.animation.LinearInterpolator;
-import android.view.animation.ScaleAnimation;
-
-import java.math.BigDecimal;
 
 /**
  * Created by kongsin on 12/11/2016.
@@ -99,8 +91,7 @@ public class ZoomView extends AppCompatImageView implements GestureDetector.OnGe
 
     protected boolean onActionUp() {
         if (matrixValueManager.getScaleX() <= 1) {
-            mCurrentMatrix.reset();
-            postInvalidate();
+            zoomAnimation(1.0f);
         } else {
             mHandler.post(new Runnable() {
                 @Override
