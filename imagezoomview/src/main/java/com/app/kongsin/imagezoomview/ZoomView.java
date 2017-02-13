@@ -1,5 +1,6 @@
 package com.app.kongsin.imagezoomview;
 
+import android.animation.PropertyValuesHolder;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -8,6 +9,7 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.PointF;
+import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.support.annotation.Nullable;
@@ -19,7 +21,10 @@ import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.animation.Animation;
+import android.view.animation.LinearInterpolator;
 import android.view.animation.ScaleAnimation;
+
+import java.math.BigDecimal;
 
 /**
  * Created by kongsin on 12/11/2016.
@@ -97,6 +102,7 @@ public class ZoomView extends AppCompatImageView implements GestureDetector.OnGe
             mCurrentMatrix.reset();
             postInvalidate();
         } else {
+            findCurrentZoomPoint();
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -154,41 +160,29 @@ public class ZoomView extends AppCompatImageView implements GestureDetector.OnGe
         mHandler.post(new Runnable() {
             @Override
             public void run() {
-                Log.i(TAG, "run: " + y);
                 mLastPositionY = 0;
-                ValueAnimator animY = ValueAnimator.ofFloat(0, y);
-                animY.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                    @Override
-                    public void onAnimationUpdate(ValueAnimator animation) {
-                        float value = (float) animation.getAnimatedValue();
-                        Log.i(TAG, "onAnimationUpdate: " + value);
-                        mCurrentMatrix.postTranslate(0, value - mLastPositionY);
-                        matrixValueManager.setMatrix(mCurrentMatrix);
-                        postInvalidate();
-                        mLastPositionY = value;
-                        findCurrentZoomPoint();
-                    }
-                });
-                animY.setDuration(250);
-                animY.start();
-
                 mLastPositionX = 0;
-                ValueAnimator animX = ValueAnimator.ofFloat(0, x);
-                animX.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                PropertyValuesHolder valueY = PropertyValuesHolder.ofFloat("y", 0, y);
+                PropertyValuesHolder valueX = PropertyValuesHolder.ofFloat("x", 0, x);
+                ValueAnimator anim = new ValueAnimator();
+                anim.setValues(valueX, valueY);
+                anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                     @Override
                     public void onAnimationUpdate(ValueAnimator animation) {
-                        float value = (float) animation.getAnimatedValue();
-                        Log.i(TAG, "onAnimationUpdate: " + value);
-                        mCurrentMatrix.postTranslate(value - mLastPositionX, 0);
+                        float valueX = (float) animation.getAnimatedValue("x");
+                        float valueY = (float) animation.getAnimatedValue("y");
+                        mCurrentMatrix.postTranslate(valueX - mLastPositionX, valueY - mLastPositionY);
                         matrixValueManager.setMatrix(mCurrentMatrix);
                         postInvalidate();
-                        mLastPositionX = value;
-                        findCurrentZoomPoint();
+                        mLastPositionY = valueY;
+                        mLastPositionX = valueX;
+                        if (valueX >= x && valueY >= y){
+                            findCurrentZoomPoint();
+                        }
                     }
                 });
-                animX.setDuration(250);
-                animX.start();
-
+                anim.setDuration(250);
+                anim.start();
             }
         });
 
@@ -292,20 +286,32 @@ public class ZoomView extends AppCompatImageView implements GestureDetector.OnGe
 
         mRect.set(rawX, rawY);
         move(x, y);
-        findCurrentZoomPoint();
     }
 
-    /*
-    * totalWidth = 1024
-    * imgWidth = 780
-    * space = (totalWidth - imgWidth) / 2
-    * left = -200
-    * currentLeft = 200
-    * currentPos = (space + (currentLeft))
-    * */
     private void findCurrentZoomPoint() {
-        float _x = ((getWidth() / matrixValueManager.getScaleX()) / 2) - (matrixValueManager.getTransitionX() / matrixValueManager.getScaleX());
-        float _y = ((getHeight() / matrixValueManager.getScaleY()) / 2) - (matrixValueManager.getTransitionY() / matrixValueManager.getScaleY());
+        float _x, _y;
+        //X
+        float imgW = (getWidth() - (mImageMatrixManager.getTransitionX() * 2)) * matrixValueManager.getScaleX();
+        float scrollAbleX = (getWidth() - imgW);
+        if (scrollAbleX < 0) {
+            float mX = ((matrixValueManager.getTransitionX() / matrixValueManager.getScaleX()));
+            float visibleScreenX = (getWidth() / matrixValueManager.getScaleX());
+            float percentX = ((Math.abs(mX)) * 100) / (getWidth() - visibleScreenX);
+            _x = Math.abs(mX) + ((percentX * visibleScreenX) / 100);
+        } else {
+            _x = getWidth() / 2;
+        }
+        //Y
+        float imgH = (getHeight() - (mImageMatrixManager.getTransitionY() * 2)) * matrixValueManager.getScaleY();
+        float scrollAbleY = (getHeight() - imgH);
+        if (scrollAbleY < 0) {
+            float mY = ((matrixValueManager.getTransitionY() / matrixValueManager.getScaleY()));
+            float visibleScreenY = (getHeight() / matrixValueManager.getScaleY());
+            float percentY = ((Math.abs(mY)) * 100) / (getHeight() - visibleScreenY);
+            _y = Math.abs(mY) + ((percentY * visibleScreenY) / 100);
+        } else {
+            _y = getHeight() / 2;
+        }
         mCurrentZoomPoint.set(_x, _y);
         postInvalidate();
     }
@@ -334,25 +340,30 @@ public class ZoomView extends AppCompatImageView implements GestureDetector.OnGe
         return false;
     }
 
+    float mLastScale = 0;
     public void releaseZoom(){
         if (matrixValueManager.getScaleX() > 1 || matrixValueManager.getScaleY()> 1) {
             isZooming = true;
+            mLastScale = 0;
             final float scale = matrixValueManager.getScaleX();
-            ValueAnimator valueAnimator = ValueAnimator.ofFloat(Math.abs(1-scale));
+            ValueAnimator valueAnimator = ValueAnimator.ofFloat(scale, 1.0f);
+            valueAnimator.setInterpolator(new LinearInterpolator());
             valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                 @Override
                 public void onAnimationUpdate(ValueAnimator animation) {
                     float value = (float) animation.getAnimatedValue();
-                    Matrix matrix = new Matrix(mCurrentMatrix);
-                    matrix.setScale(scale - value, scale - value, mCurrentZoomPoint.x, mCurrentZoomPoint.y);
-                    mCurrentMatrix.set(matrix);
-                    postInvalidate();
-                    if (value == Math.abs(1-scale)) {
-                        isZooming = false;
+                    if (value != scale) {
+                        Matrix matrix = new Matrix(mCurrentMatrix);
+                        matrix.setScale(value, value, mCurrentZoomPoint.x, mCurrentZoomPoint.y);
+                        mCurrentMatrix.set(matrix);
+                        postInvalidate();
+                        if (value == 1) {
+                            isZooming = false;
+                        }
                     }
                 }
             });
-            valueAnimator.setDuration(250);
+            valueAnimator.setDuration(350);
             valueAnimator.start();
         }
     }
@@ -363,36 +374,30 @@ public class ZoomView extends AppCompatImageView implements GestureDetector.OnGe
     }
 
     private void zoomAnimation(final float scale) {
-        ScaleAnimation mMyScaleAnimation = new ScaleAnimation(1.0F, scale, 1.0F, scale, mCurrentZoomPoint.x, mCurrentZoomPoint.y);
-        mMyScaleAnimation.setDuration(250);
-        mMyScaleAnimation.setAnimationListener(new Animation.AnimationListener() {
+        isZooming = true;
+        ValueAnimator valueAnimator = ValueAnimator.ofFloat(matrixValueManager.getScaleX(), scale);
+        valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
-            public void onAnimationStart(Animation animation) {
-                isZooming = true;
-            }
-
-            @Override
-            public void onAnimationEnd(Animation animation) {
-
-                mCurrentMatrix.postScale(scale, scale, mCurrentZoomPoint.x, mCurrentZoomPoint.y);
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float value = (float) animation.getAnimatedValue();
+                Matrix matrix = new Matrix(mCurrentMatrix);
+                matrix.setScale(value, value, mCurrentZoomPoint.x, mCurrentZoomPoint.y);
+                mCurrentMatrix.set(matrix);
+                matrixValueManager.setMatrix(mCurrentMatrix);
                 postInvalidate();
-
-                mHandler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        adjustPosition();
-                    }
-                }, 250);
-                isZooming = false;
-            }
-
-            @Override
-            public void onAnimationRepeat(Animation animation) {
-
+                if (value == scale) {
+                    mHandler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            adjustPosition();
+                        }
+                    }, 100);
+                    isZooming = false;
+                }
             }
         });
-
-        startAnimation(mMyScaleAnimation);
+        valueAnimator.setDuration(250);
+        valueAnimator.start();
     }
 
     @Override
@@ -433,7 +438,6 @@ public class ZoomView extends AppCompatImageView implements GestureDetector.OnGe
     @Override
     public void onScaleEnd(ScaleGestureDetector scaleGestureDetector) {
         mRect.set(scaleGestureDetector.getFocusX(), scaleGestureDetector.getFocusY());
-        findCurrentZoomPoint();
         isZooming = false;
     }
 }

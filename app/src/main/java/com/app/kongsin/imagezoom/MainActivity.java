@@ -26,7 +26,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         List<String> _urls = new ArrayList<>();
-        _urls.add("http://im02.thewallpapers.org/photo/70865/Winter-Nature-Snow-Scene-007.jpg");
+        _urls.add("http://img.7te.org/images/570x363/rusted-robo-studios-nature-hd-live-wallpaper-121659.jpg");
         _urls.add("https://www.clipartsgram.com/image/446141344-sunset-in-winter-nature-wallpaper.jpg");
         _urls.add("https://s-media-cache-ak0.pinimg.com/736x/50/51/f2/5051f25fc731ffb2bb48b09d97bbd4fb.jpg");
         _urls.add("http://wallpapercave.com/wp/zr5GMoE.jpg");
